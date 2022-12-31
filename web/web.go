@@ -170,6 +170,11 @@ func noTokenRouter(router *gin.Engine) {
 		controller.ClashSubInfo(c)
 	})
 }
+func noTokenRouterMulti(router *gin.Engine) {
+	router.GET("/trojan/user/subscribemulti", func(c *gin.Context) {
+		controller.ClashSubInfoMulti(c)
+	})
+}
 
 // Start web启动入口
 func Start(host string, port, timeout int, isSSL bool) {
@@ -178,6 +183,7 @@ func Start(host string, port, timeout int, isSSL bool) {
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 	staticRouter(router)
 	noTokenRouter(router)
+	noTokenRouterMulti(router)
 	router.Use(Auth(router, timeout).MiddlewareFunc())
 	trojanRouter(router)
 	userRouter(router)

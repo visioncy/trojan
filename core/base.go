@@ -2,13 +2,16 @@ package core
 
 // Config 结构体
 type Config struct {
-	RunType    string   `json:"run_type"`
-	LocalAddr  string   `json:"local_addr"`
-	LocalPort  int      `json:"local_port"`
-	RemoteAddr string   `json:"remote_addr"`
-	RemotePort int      `json:"remote_port"`
-	Password   []string `json:"password"`
-	LogLevel   int      `json:"log_level"`
+	RunType      string   `json:"run_type"`
+	LocalAddr    string   `json:"local_addr"`
+	LocalPort    int      `json:"local_port"`
+	LocalPortMin int      `json:"local_port_min"`
+	LocalPortMax int      `json:"local_port_max"`
+	LocalPortNum int      `json:"local_port_num"`
+	RemoteAddr   string   `json:"remote_addr"`
+	RemotePort   int      `json:"remote_port"`
+	Password     []string `json:"password"`
+	LogLevel     int      `json:"log_level"`
 }
 
 // SSL 结构体

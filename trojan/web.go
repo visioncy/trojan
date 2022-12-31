@@ -54,3 +54,8 @@ func GetDomainAndPort() (string, int) {
 	config := core.GetConfig()
 	return config.SSl.Sni, config.LocalPort
 }
+
+func GetDomain() (string, int, int, int) {
+	config := core.GetConfig()
+	return config.SSl.Sni, config.LocalPortMin, config.LocalPortMax, config.LocalPortNum
+}
