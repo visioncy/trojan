@@ -6,7 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"math/rand"
-	"strconv"
+	strconv "strconv"
+	"strings"
 	"time"
 	"trojan/core"
 	"trojan/trojan"
@@ -268,7 +269,7 @@ func ClashSubInfoMulti(c *gin.Context) {
 			c.Header("content-disposition", fmt.Sprintf("attachment; filename=%s", user.Username))
 			c.Header("subscription-userinfo", userInfo)
 
-			domain, portMin, portMax, portNum := trojan.GetDomain()
+			domain, portMin, portMax, portNum, serverName, servers := trojan.GetDomain()
 			//			name := fmt.Sprintf("%s:%d", domain, port)
 			//			configData := string(core.Load(""))
 			//			if gjson.Get(configData, "websocket").Exists() && gjson.Get(configData, "websocket.enabled").Bool() {
@@ -303,7 +304,7 @@ func ClashSubInfoMulti(c *gin.Context) {
 			var result string
 			var portRnd int
 			if portNum == 0 {
-				portNum = 20
+				portNum = 5
 			}
 			if portMin == 0 {
 				portMin = 40000
@@ -311,13 +312,26 @@ func ClashSubInfoMulti(c *gin.Context) {
 			if portMax == 0 {
 				portMax = 50000
 			}
+			if serverName == "" {
+				serverName = "USS-"
+			}
 
-			for i := 1; i <= portNum; i++ {
-				portRnd = rand.Intn(portMax-portMin) + portMin
-				wsData = fmt.Sprintf(
-					`trojan://%s@%s:%d#US%d
-`, password, domain, portRnd, i)
-				result = result + wsData
+			//如果域名没配置,使用默认域名填上
+			if len(servers) == 0 {
+				servers = []string{serverName + "," + domain}
+			}
+			for srvi := 0; srvi < len(servers); srvi++ {
+				//var srvName, srvDomain string
+				serverSplit := strings.Split(servers[srvi], ",")
+				srvName := serverSplit[0]
+				srvDomain := serverSplit[1]
+				for i := 1; i <= portNum; i++ {
+					portRnd = rand.Intn(portMax-portMin) + portMin
+					wsData = fmt.Sprintf(
+						`trojan://%s@%s:%d#%s
+`, password, srvDomain, portRnd, srvName+strconv.Itoa(i))
+					result = result + wsData
+				}
 			}
 			c.String(200, base64.StdEncoding.EncodeToString([]byte(result)))
 			return

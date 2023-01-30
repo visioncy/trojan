@@ -55,7 +55,8 @@ func GetDomainAndPort() (string, int) {
 	return config.SSl.Sni, config.LocalPort
 }
 
-func GetDomain() (string, int, int, int) {
+func GetDomain() (string, int, int, int, string, []string) {
 	config := core.GetConfig()
-	return config.SSl.Sni, config.LocalPortMin, config.LocalPortMax, config.LocalPortNum
+	return config.SSl.Sni, config.LocalPortMin, config.LocalPortMax, config.LocalPortNum,
+		config.ServerName, config.Servers
 }

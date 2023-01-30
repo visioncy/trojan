@@ -12,6 +12,8 @@ type Config struct {
 	RemotePort   int      `json:"remote_port"`
 	Password     []string `json:"password"`
 	LogLevel     int      `json:"log_level"`
+	ServerName   string   `json:"server_name"`
+	Servers      []string `json:"servers"`
 }
 
 // SSL 结构体

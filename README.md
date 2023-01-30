@@ -96,6 +96,16 @@ Flags:
 ## 注意
 安装完trojan后强烈建议开启BBR等加速: [Linux-NetSpeed](https://github.com/chiakge/Linux-NetSpeed)  
 
+## Windows Build Linux file
+```
+set CGO_ENABLED=0
+set GOARCH=amd64
+set GOOS=linux
+ 
+#构建
+
+go build main.go
+```
 ## Thanks
 感谢JetBrains提供的免费GoLand  
 [![avatar](asset/jetbrains.svg)](https://jb.gg/OpenSource)
