@@ -189,7 +189,7 @@ func Start(host string, port, timeout int, isSSL bool) {
 	userRouter(router)
 	dataRouter(router)
 	commonRouter(router)
-	controller.SheduleTask()
+	controller.ScheduleTask()
 	controller.CollectTask()
 	util.OpenPort(port)
 	if isSSL {
