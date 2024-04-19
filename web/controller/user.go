@@ -257,14 +257,24 @@ func ClashSubInfoMulti(c *gin.Context) {
 		pass, _ := base64.StdEncoding.DecodeString(user.Password)
 		if password == string(pass) {
 			var wsData string
+			var nwQuotaInfo string
+			var nwExpireInfo string
+
 			userInfo := fmt.Sprintf("upload=%d, download=%d", user.Upload, user.Download)
+			nwInfo := fmt.Sprintf("已用=%.1fGB(下=%.1fGB,上=%.1fGB)", float64(user.Upload+user.Download)/1073741824,
+				float64(user.Download)/1073741824, float64(user.Upload)/1073741824)
+
 			if user.Quota != -1 {
 				userInfo = fmt.Sprintf("%s, total=%d", userInfo, user.Quota)
+				nwQuotaInfo = fmt.Sprintf("流量限制=%.1fGB", float64(user.Quota)/1073741824)
+			} else {
+				nwQuotaInfo = fmt.Sprintf("流量限制=无限")
 			}
 			if user.ExpiryDate != "" {
 				utc, _ := time.LoadLocation("Asia/Shanghai")
 				t, _ := time.ParseInLocation("2006-01-02", user.ExpiryDate, utc)
 				userInfo = fmt.Sprintf("%s, expire=%d", userInfo, t.Unix())
+				nwExpireInfo = fmt.Sprintf("用户=%s, 过期=%s", username, t.Format("2006-01-02"))
 			}
 			c.Header("content-disposition", fmt.Sprintf("attachment; filename=%s", user.Username))
 			c.Header("subscription-userinfo", userInfo)
@@ -320,6 +330,17 @@ func ClashSubInfoMulti(c *gin.Context) {
 			if len(servers) == 0 {
 				servers = []string{serverName + "," + domain}
 			}
+
+			nwInfoServers := []string{nwExpireInfo, nwQuotaInfo, nwInfo}
+
+			//加入流量信息
+			for srvi := 0; srvi < len(nwInfoServers); srvi++ {
+				wsData = fmt.Sprintf(
+					`trojan://%s@%s:%d#%s
+`, password, "127.0.0.1", 555, nwInfoServers[srvi])
+				result = result + wsData
+			}
+
 			for srvi := 0; srvi < len(servers); srvi++ {
 				//var srvName, srvDomain string
 				serverSplit := strings.Split(servers[srvi], ",")
