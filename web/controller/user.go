@@ -275,6 +275,8 @@ func ClashSubInfoMulti(c *gin.Context) {
 				t, _ := time.ParseInLocation("2006-01-02", user.ExpiryDate, utc)
 				userInfo = fmt.Sprintf("%s, expire=%d", userInfo, t.Unix())
 				nwExpireInfo = fmt.Sprintf("用户=%s, 过期=%s", username, t.Format("2006-01-02"))
+			} else {
+				nwExpireInfo = fmt.Sprintf("用户=%s, 过期=无限期", username)
 			}
 			c.Header("content-disposition", fmt.Sprintf("attachment; filename=%s", user.Username))
 			c.Header("subscription-userinfo", userInfo)
