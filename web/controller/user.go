@@ -36,6 +36,10 @@ func UserList(requestUser string) *ResponseBody {
 			userList = []*core.User{}
 		}
 	}
+
+	//User加入连接数资料
+	UserListFillData(userList)
+
 	domain, port := trojan.GetDomainAndPort()
 	responseBody.Data = map[string]interface{}{
 		"domain":   domain,
@@ -43,6 +47,16 @@ func UserList(requestUser string) *ResponseBody {
 		"userList": userList,
 	}
 	return &responseBody
+}
+func UserListFillData(userList []*core.User) []*core.User {
+	var trojanStatusMap = trojan.TrojanStatusMap()
+	for _, user := range userList {
+		if trojanStatusMap[user.EncryptPass].Status != nil {
+			user.IpCurrent = trojanStatusMap[user.EncryptPass].Status.IpCurrent
+		}
+	}
+
+	return userList
 }
 
 // PageUserList 分页查询获取用户列表

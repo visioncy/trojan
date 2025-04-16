@@ -30,15 +30,19 @@ type Mysql struct {
 
 // User 用户表记录结构体
 type User struct {
-	ID          uint
-	Username    string
-	Password    string
-	EncryptPass string
-	Quota       int64
-	Download    uint64
-	Upload      uint64
-	UseDays     uint
-	ExpiryDate  string
+	ID                 uint
+	Username           string
+	Password           string
+	EncryptPass        string
+	Quota              int64
+	Download           uint64
+	Upload             uint64
+	UseDays            uint
+	ExpiryDate         string
+	UploadSpeedLimit   uint64
+	DownloadSpeedLimit uint64
+	IpLimit            uint64
+	IpCurrent          int32
 }
 
 // PageQuery 分页查询的结构体
@@ -91,15 +95,18 @@ func (mysql *Mysql) CreateTable() {
 
 func queryUserList(db *sql.DB, sql string) ([]*User, error) {
 	var (
-		username    string
-		encryptPass string
-		passShow    string
-		download    uint64
-		upload      uint64
-		quota       int64
-		id          uint
-		useDays     uint
-		expiryDate  string
+		username           string
+		encryptPass        string
+		passShow           string
+		download           uint64
+		upload             uint64
+		quota              int64
+		id                 uint
+		useDays            uint
+		expiryDate         string
+		uploadSpeedLimit   *uint64
+		downloadSpeedLimit *uint64
+		ipLimit            *uint64
 	)
 	var userList []*User
 	rows, err := db.Query(sql)
@@ -108,19 +115,36 @@ func queryUserList(db *sql.DB, sql string) ([]*User, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		if err := rows.Scan(&id, &username, &encryptPass, &passShow, &quota, &download, &upload, &useDays, &expiryDate); err != nil {
+		if err := rows.Scan(&id, &username, &encryptPass, &passShow, &quota, &download, &upload, &useDays, &expiryDate, &uploadSpeedLimit, &downloadSpeedLimit, &ipLimit); err != nil {
 			return nil, err
 		}
+
+		if uploadSpeedLimit == nil {
+			temp := uint64(0)
+			uploadSpeedLimit = &temp
+		}
+		if downloadSpeedLimit == nil {
+			temp := uint64(0)
+			downloadSpeedLimit = &temp
+		}
+		if ipLimit == nil {
+			temp := uint64(0)
+			ipLimit = &temp
+		}
+
 		userList = append(userList, &User{
-			ID:          id,
-			Username:    username,
-			Password:    passShow,
-			EncryptPass: encryptPass,
-			Download:    download,
-			Upload:      upload,
-			Quota:       quota,
-			UseDays:     useDays,
-			ExpiryDate:  expiryDate,
+			ID:                 id,
+			Username:           username,
+			Password:           passShow,
+			EncryptPass:        encryptPass,
+			Download:           download,
+			Upload:             upload,
+			Quota:              quota,
+			UseDays:            useDays,
+			ExpiryDate:         expiryDate,
+			UploadSpeedLimit:   *uploadSpeedLimit,
+			DownloadSpeedLimit: *downloadSpeedLimit,
+			IpLimit:            *ipLimit,
 		})
 	}
 	return userList, nil
@@ -128,21 +152,51 @@ func queryUserList(db *sql.DB, sql string) ([]*User, error) {
 
 func queryUser(db *sql.DB, sql string) (*User, error) {
 	var (
-		username    string
-		encryptPass string
-		passShow    string
-		download    uint64
-		upload      uint64
-		quota       int64
-		id          uint
-		useDays     uint
-		expiryDate  string
+		username           string
+		encryptPass        string
+		passShow           string
+		download           uint64
+		upload             uint64
+		quota              int64
+		id                 uint
+		useDays            uint
+		expiryDate         string
+		uploadSpeedLimit   *uint64
+		downloadSpeedLimit *uint64
+		ipLimit            *uint64
 	)
 	row := db.QueryRow(sql)
-	if err := row.Scan(&id, &username, &encryptPass, &passShow, &quota, &download, &upload, &useDays, &expiryDate); err != nil {
+	if err := row.Scan(&id, &username, &encryptPass, &passShow, &quota, &download, &upload, &useDays, &expiryDate, &uploadSpeedLimit, &downloadSpeedLimit, &ipLimit); err != nil {
 		return nil, err
 	}
-	return &User{ID: id, Username: username, Password: passShow, EncryptPass: encryptPass, Download: download, Upload: upload, Quota: quota, UseDays: useDays, ExpiryDate: expiryDate}, nil
+
+	if uploadSpeedLimit == nil {
+		temp := uint64(0)
+		uploadSpeedLimit = &temp
+	}
+	if downloadSpeedLimit == nil {
+		temp := uint64(0)
+		downloadSpeedLimit = &temp
+	}
+	if ipLimit == nil {
+		temp := uint64(0)
+		ipLimit = &temp
+	}
+
+	return &User{
+		ID:                 id,
+		Username:           username,
+		Password:           passShow,
+		EncryptPass:        encryptPass,
+		Download:           download,
+		Upload:             upload,
+		Quota:              quota,
+		UseDays:            useDays,
+		ExpiryDate:         expiryDate,
+		UploadSpeedLimit:   *uploadSpeedLimit,
+		DownloadSpeedLimit: *downloadSpeedLimit,
+		IpLimit:            *ipLimit,
+	}, nil
 }
 
 // CreateUser 创建Trojan用户
@@ -153,7 +207,7 @@ func (mysql *Mysql) CreateUser(username string, base64Pass string, originPass st
 	}
 	defer db.Close()
 	encryPass := sha256.Sum224([]byte(originPass))
-	if _, err := db.Exec(fmt.Sprintf("INSERT INTO users(username, password, passwordShow, quota) VALUES ('%s', '%x', '%s', -1);", username, encryPass, base64Pass)); err != nil {
+	if _, err := db.Exec(fmt.Sprintf("INSERT INTO users(username, password, passwordShow, quota,uploadSpeedLimit,downloadSpeedLimit,ipLimit) VALUES ('%s', '%x', '%s', -1,10485760,10485760,2);", username, encryPass, base64Pass)); err != nil {
 		fmt.Println(err)
 		return err
 	}

@@ -1,6 +1,7 @@
 package trojan
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"trojan/api/service"
 	"trojan/core"
 	"trojan/util"
 )
@@ -147,4 +149,56 @@ func Type() string {
 		_ = core.SetValue("trojanType", tType)
 	}
 	return tType
+}
+
+func TrojanStatus() []service.ListUsersResponse {
+	flag := "-api-addr 127.0.0.1:10000 -api list"
+	if Type() == "trojan-go" {
+		flag = "-api-addr 127.0.0.1:10000 -api list"
+	}
+	result := strings.TrimSpace(util.ExecCommandWithResult("/usr/bin/trojan/trojan " + flag))
+	if len(result) == 0 {
+		return nil
+	}
+
+	var userstatuslist []service.ListUsersResponse
+	err := json.Unmarshal([]byte(result), &userstatuslist)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return nil
+	}
+	fmt.Println("JSONString:" + result)
+	fmt.Println("JSONString Len:" + string(len(userstatuslist)))
+
+	return userstatuslist
+}
+
+func TrojanStatusMap() map[string]service.ListUsersResponse {
+	var userstatus = TrojanStatus()
+	if userstatus == nil {
+		return nil
+	}
+
+	// 转换为 JSON 字符串
+	jsonString, err := json.Marshal(userstatus)
+	if err != nil {
+		fmt.Println("Error TrojanStatusMap marshalling JSON:", err)
+		return nil
+	} else {
+		fmt.Println("userstatus JSON:" + string(jsonString))
+	}
+
+	var userstatusMap = convertToMap(userstatus)
+	return userstatusMap
+}
+
+func convertToMap(userStatuseList []service.ListUsersResponse) map[string]service.ListUsersResponse {
+	// 创建一个以 Hash 为键的 map
+	userStatusMap := make(map[string]service.ListUsersResponse)
+	for _, userStatus := range userStatuseList {
+		userStatusMap[userStatus.Status.User.Hash] = userStatus
+	}
+	fmt.Println("userStatusMap count: ", len(userStatusMap))
+
+	return userStatusMap
 }
