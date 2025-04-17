@@ -328,7 +328,7 @@ func ClashSubInfoMulti(c *gin.Context) {
 			//}
 
 			var result string
-			var portRnd int
+			//var portRnd int
 			if portNum == 0 {
 				portNum = 5
 			}
@@ -357,19 +357,85 @@ func ClashSubInfoMulti(c *gin.Context) {
 				result = result + wsData
 			}
 
+			//			for srvi := 0; srvi < len(servers); srvi++ {
+			//				//var srvName, srvDomain string
+			//				serverSplit := strings.Split(servers[srvi], ",")
+			//				srvName := serverSplit[0]
+			//				srvDomain := serverSplit[1]
+			//				srvport := serverSplit[2]
+			//				srvtype := serverSplit[3]
+			//				srvhost := serverSplit[4]
+			//				srvPath := serverSplit[5]
+			//				//trojan://[PASSWORD]@[SERVERHOST]:[PORT]?type=[TYPE]&host=[HOST]&path=[PATH]#[NODE_NAME]
+			//				//trojan://password@example.com:443?type=ws&host=yourdomain.com&path=/ray#MyTrojanNode
+			//				for i := 1; i <= portNum; i++ {
+			//					portRnd = rand.Intn(portMax-portMin) + portMin
+			//					wsData = fmt.Sprintf(
+			//						`trojan://%s@%s:%d#%s
+			//`, password, srvDomain, portRnd, srvName+strconv.Itoa(i))
+			//					result = result + wsData
+			//				}
+			//			}
 			for srvi := 0; srvi < len(servers); srvi++ {
-				//var srvName, srvDomain string
 				serverSplit := strings.Split(servers[srvi], ",")
 				srvName := serverSplit[0]
 				srvDomain := serverSplit[1]
+
+				// Initialize optional fields as empty strings
+				srvport := ""
+				srvtype := ""
+				srvhost := ""
+				srvPath := ""
+
+				// Only assign if the index exists
+				if len(serverSplit) > 2 {
+					srvport = serverSplit[2]
+				}
+				if len(serverSplit) > 3 {
+					srvtype = serverSplit[3]
+				}
+				if len(serverSplit) > 4 {
+					srvhost = serverSplit[4]
+				}
+				if len(serverSplit) > 5 {
+					srvPath = serverSplit[5]
+				}
+
+				// Build query parameters (only if they exist)
+				var queryParams []string
+				if srvtype != "" {
+					queryParams = append(queryParams, "type="+srvtype)
+				}
+				if srvhost != "" {
+					queryParams = append(queryParams, "host="+srvhost)
+				}
+				if srvPath != "" {
+					queryParams = append(queryParams, "path="+srvPath)
+				}
+
+				queryString := ""
+				if len(queryParams) > 0 {
+					queryString = "?" + strings.Join(queryParams, "&")
+				}
+
+				// Use srvport if available, otherwise random port
+				port := 0
+				if srvport != "" {
+					port, _ = strconv.Atoi(srvport)
+				} else {
+					port = rand.Intn(portMax-portMin) + portMin
+				}
+
+				//trojan://[PASSWORD]@[SERVERHOST]:[PORT]?type=[TYPE]&host=[HOST]&path=[PATH]#[NODE_NAME]
+				//trojan://password@example.com:443?type=ws&host=yourdomain.com&path=/ray#MyTrojanNode
 				for i := 1; i <= portNum; i++ {
-					portRnd = rand.Intn(portMax-portMin) + portMin
 					wsData = fmt.Sprintf(
-						`trojan://%s@%s:%d#%s
-`, password, srvDomain, portRnd, srvName+strconv.Itoa(i))
+						`trojan://%s@%s:%d%s#%s
+`, password, srvDomain, port, queryString, srvName)
 					result = result + wsData
 				}
 			}
+
 			c.String(200, base64.StdEncoding.EncodeToString([]byte(result)))
 			return
 		}
