@@ -431,7 +431,7 @@ func ClashSubInfoMulti(c *gin.Context) {
 				for i := 1; i <= portNum; i++ {
 					wsData = fmt.Sprintf(
 						`trojan://%s@%s:%d%s#%s
-`, password, srvDomain, port, queryString, srvName)
+`, password, srvDomain, port, queryString, strconv.Itoa(srvi+1)+srvName)
 					result = result + wsData
 				}
 			}
